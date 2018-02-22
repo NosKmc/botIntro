@@ -42,6 +42,11 @@ def addRespond(rtm):
             return
         enableResponses[mes] = res
         responseMsg(rtm,"Success")
+
+def showDetails(rtm):
+    if rtm["text"] == "nosetting show enable Channels":
+        responseMsg(rtm,enableChannels)
+    if rtm["text"] == "nosetting show responses":
         responseMsg(rtm,enableResponses)
 
 def addChannel(rtm):

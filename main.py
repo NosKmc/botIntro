@@ -23,10 +23,10 @@ def response(rtm):
             postMsg(enableResponses[er], rtm["channel"])
 
 def addRespond(rtm):
-    if rtm["text"][0:17] == "nosetting Respond":
+    if rtm["text"][0:17] == "nosetting respond":
         list = rtm["text"].split()
         del list[0:2]
-        inRes = "false"
+        inMes = "false"
         res = ""
         mes = ""
         for s in list:
@@ -75,6 +75,7 @@ if sc.rtm_connect():
                         response(rtm)
                         addRespond(rtm)
                         disChannel(rtm)
+                        showDetails(rtm)
                     else:
                         addChannel(rtm)
                 """

@@ -1,3 +1,5 @@
+# cofing: utf-8
+
 import os
 import time
 import re
@@ -19,13 +21,13 @@ pat_ns_help = re.compile(r"nosetting help",re.IGNORECASE)
 pat_space = re.compile(r"^\s+")
 pat_space2 = re.compile(r"\s+$")
 
-def postMsg(msg, channel):
+def postMsg(msg, channel,unfurl=True):
     sc.api_call(
         "chat.postMessage",
         channel=channel,
         text=msg,
         icon_emoji=":mawarunos:",
-        unfurl_links=True,
+        unfurl_links=unfurl,
         username="nosponse"
     )
 def responseMsg(rtm, msg):
@@ -63,14 +65,14 @@ def addRespond(rtm):
                 if resp == mes:
                     del enableResponses[resp]
                     responseMsg(rtm,"Deleted the response!")
-                    response_file = open("responses.json", "w")
+                    response_file = open("responses.json", "w",encoding="utf-8")
                     json.dump(enableResponses, response_file, indent=4)
                     response_file.close()
                     return
             responseMsg(rtm,"Error!")
             return
         enableResponses[mes] = res
-        response_file = open("responses.json", "w")
+        response_file = open("responses.json", "w",encoding="utf-8")
         json.dump(enableResponses, response_file, indent=4)
         response_file.close()
         responseMsg(rtm,"Success!")
@@ -91,7 +93,7 @@ def addRandrespond(rtm):
         mes = list.pop(0)
         res = list
         enableResponses[mes] = res
-        response_file = open("responses.json", "w")
+        response_file = open("responses.json", "w",encoding="utf-8")
         json.dump(enableResponses, response_file, indent=4)
         response_file.close()
         responseMsg(rtm,"Success!")
@@ -104,12 +106,12 @@ def showDetails(rtm):
         responseMsg(rtm,ch_link)
     if pat_ns_SR.match(rtm["text"]):
         res = pprint.pformat(enableResponses, indent=4)
-        responseMsg(rtm, res)
+        postMsg(escape_uid(res), rtm["channel"], unfurl=False)
 
 def addChannel(rtm, inCh):
     if pat_ns_AC.match(rtm["text"]):
         enableChannels[rtm["channel"]] = get_channel_name(rtm["channel"])
-        channel_file = open("enable_channels.json", "w")
+        channel_file = open("enable_channels.json", "w",encoding="utf-8")
         json.dump(enableChannels, channel_file, indent=4)
         channel_file.close()
         if inCh:
@@ -120,7 +122,7 @@ def addChannel(rtm, inCh):
 def disChannel(rtm):
     if pat_ns_DC.match(rtm["text"]):
         del enableChannels[rtm["channel"]]
-        channel_file = open("enable_channels.json", "w")
+        channel_file = open("enable_channels.json", "w",encoding="utf-8")
         json.dump(enableChannels, channel_file, indent=4)
         channel_file.close()
         responseMsg(rtm,"Success!")
@@ -140,18 +142,34 @@ def get_channel_name(channelid):
 
 def get_channel_id(channelname):
     channelid = ""
-    ch_list = sc.channels.list
+    ch_list = sc.api_call("channels.list")
     if ch_list["ok"]:
         for channel in ch_list["channels"]:
             if channel["name"] == channelname:
                 channelid = channel["id"]
                 return channelid
 
-channel_file = open("enable_channels.json", "r")
+def get_user_name(userid):
+    username = ""
+    u_list = sc.api_call("users.list")
+    if u_list["ok"]:
+        for user in u_list["members"]:
+            if user["id"] == userid:
+                username = user["name"]
+                return username
+
+def escape_uid(text):
+    res = text.replace("!","！")
+    for found in re.findall(r"<@(.*?)>", text):
+        res = res.replace(found, get_user_name(found))
+    res = res.replace("@","＠")
+    return res
+
+channel_file = open("enable_channels.json", "r", encoding="utf-8")
 enableChannels = json.load(channel_file)
 channel_file.close()
 
-response_file = open("responses.json", "r")
+response_file = open("responses.json", "r", encoding="utf-8")
 enableResponses = json.load(response_file)
 response_file.close()
 
@@ -168,7 +186,7 @@ if sc.rtm_connect():
                         if rtm["channel"] == ec:
                             inCh = True
                             break
-                    if inCh == True:
+                    if inCh:
                         response(rtm)
                         addRespond(rtm)
                         disChannel(rtm)
